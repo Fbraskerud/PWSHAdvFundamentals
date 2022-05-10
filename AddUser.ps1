@@ -1,3 +1,4 @@
+
 $MyUserListFile = "$PSScriptRoot\MyLabFile.csv"
 
 $MyName = Read-Host -Prompt 'What is your name?'
