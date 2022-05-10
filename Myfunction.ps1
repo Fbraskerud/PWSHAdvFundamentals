@@ -7,13 +7,13 @@ function GetUserData    {
 }
 
 function Get-CourseUser {
-    [cmdletbinding]
+    [cmdletbinding] 
     param (
         [Parameter(Mandatory)]
+    [string]$UserName
     
-        $ParameterName
-        $UserName
 
+    Write-Output "Username is a $($username.GetType())
     )
     
 
