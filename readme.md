@@ -1,1 +1,3 @@
-Hello World from my branch
+This is my lab repo.
+
+I'm learning git!
