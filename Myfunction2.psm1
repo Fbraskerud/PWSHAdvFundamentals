@@ -3,43 +3,40 @@ enum ColorEnum {
     green
     blue
     yellow
-    black
-    cyan
-
 }
 
 class Participant {
-    [String] $Name
-    [int]$Age
-    [ColorEnum] $Color
+    [string] $Name
+    [int] $Age
+    [ColorEnum] $Color 
     [int] $Id
 
-    Participant ([String]$Name, [int]$Age, [ColorEnum]$Color, [int]$Id) {
+    Participant([String]$Name, [int]$Age, [ColorEnum]$Color, [int]$Id) {
         $This.Name = $Name
         $This.Age = $Age
         $This.Color = $Color
         $This.Id = $Id
-
     }
-
-
 
     [string] ToString() {
-    Return '{0} {1} {2} {3}' -f $This.Name, $This.Age, $This.Color, $this.Id
+        Return '{0},{1},{2},{3}' -f $This.Name, $This.Age, $This.Color, $This.Id
     }
 }
-  function GetUserData    {
+
+function GetUserData {
     $MyUserListFile = "$PSScriptRoot\MyLabFile.csv"
+
     try {
-        $MyUserList = Get-Content -Path $MyUserListFile | ConvertFrom-Csv
+        $MyUserList = Get-Content -Path $MyUserListFile -ErrorAction Stop | ConvertFrom-Csv
+    }
+    catch [System.Management.Automation.ItemNotFoundException] {
+        Throw "Database not found: $MyUserListFile"
     }
     catch {
-        throw "insert txt:$_"
+        Throw "Unknown error: $_"
     }
 
-    
-$MyUserList
-    
+    $MyUserList
 }
 
 function Get-CourseUser {
@@ -63,49 +60,44 @@ function Get-CourseUser {
     }
 
     $Result
-}     
+}
+
 function Add-CourseUser {
     [CmdletBinding()]
     Param (
         $DatabaseFile = "$PSScriptRoot\MyLabFile.csv",
 
         [Parameter(Mandatory)]
-        #[ValidatePattern({'^[A-Z]\w*\s+\[A-Z](\w\s)*$'}, ErrorMessage = 'Name does not match pattern' )] Dårlig måte
+        [ValidatePattern({'^[A-Z][\w\-\s]*$'}, ErrorMessage = 'Name is in an incorrect format')]
         [string]$Name,
 
         [Parameter(Mandatory)]
         [Int]$Age,
 
         [Parameter(Mandatory)]
-       #[ValidateSet('red', 'green', 'blue', 'yellow')] Bruk heller color enum
         [ColorEnum]$Color,
 
         $UserID = (Get-Random -Minimum 10 -Maximum 100000)
     )
-
-    $MyNewUser = [Participant]::new($Name, $Age, $Color, $Id)
-    $MyCsvUser = $MyNewUser.ToString()
-
+    
+    $MyNewUser = [Participant]::new($Name, $Age, $Color, $UserId)
+    $MyCsvUser = $MyNewUser.ToString() 
+    
     $NewCSv = Get-Content $DatabaseFile -Raw
     $NewCSv += $MyCsvUser
 
     Set-Content -Value $NewCSv -Path $DatabaseFile
-    
-    #$MyCsvUser = "$Name,$Age,{0},{1}" -f $Color, $UserId
-        
 }
 
 function Remove-CourseUser {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact='High')]
-    param (
-        
+    Param (
         $DatabaseFile = "$PSScriptRoot\MyLabFile.csv"
-
     )
 
     $MyUserList = Get-Content -Path $DatabaseFile | ConvertFrom-Csv
     $RemoveUser = $MyUserList | Out-GridView -PassThru
-
+        
     if ($PSCmdlet.ShouldProcess($DatabaseFile)) {
         $MyUserList = $MyUserList | Where-Object {
             -not (
@@ -115,45 +107,21 @@ function Remove-CourseUser {
                 $_.Id -eq $RemoveUser.Id
             )
         }
-        Set-Content -Value $($MyUserList | ConvertTo-Csv -NoTypeInformation) -Path $DatabaseFile -WhatIf
+        Set-Content -Value $($MyUserList | ConvertTo-Csv -notypeInformation) -Path $DatabaseFile -WhatIf
     }
     else {
-        Write-Output "Did not Remove user $($RemoveUser.Name)"
-    
+        Write-Output "Did not remove user $($RemoveUser.Name)"
     }
-    
 }
 
-Function  Confirm-CourseUserId {
-    Param() 
+function Confirm-CourseID {
+    Param()
 
-    $AllUser = GetUserData 
+    $AllUsers = GetUserData
 
-    Foreach ($User in $AllUser) {
-
-    if ($User.Id -notmatch '^\d+$') {
-    Write-Output "User $($User.Name) has mismatch id: $($User.id)"}
-}
-}
-
-function Updateyear {
-    param (
-        $DBlist = "$PSScriptRoot\MyLabFile.csv"
-
-    )¨
-
-    $MyUserListFile = Get-Content -Path $DBlist | ConvertFrom-Csv
-    foreach ($User in $MyUserListFile){
-    [int]$User.age = [int]$User.Age + 1
-    Ageoutput $User
+    foreach ($User in $AllUsers) {
+        if ($User.Id -notmatch '^\d+$') {
+            Write-Error "User $($User.Name) has mismatching id: $($User.Id)"
+        }
     }
-    Set-Content -Value $()
-    
 }
-#$MyNewUser = (Participant)::new($Name, $Age, $Color, $Id)
-#$MyCsvUser = $MyNewUser.ToString()
-
-#$NewCSv = Get-Content $DatabaseFile -Raw
-#$NewCSv += $MyCsvUser
-
-#Set-Content -Value $NewCSv -Path $DatabaseFile -WhatIf
